@@ -7,25 +7,32 @@ require("dotenv").config();
 
 app.use(express.static('public'));
 app.set("view engine","ejs");
+app.use(bodyParser.urlencoded({extended:true}));
 
 let apiKey = `${process.env.ApiKey}`;
-let city = 'Patna';
-let url = `http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}`
-
-const data = request(url, (err,res,body) => {
-    if(err){
-        console.log(err);
-    }
-    else{
-        let weather = JSON.parse(body);
-        //console.log(weather);
-        let msg = `The temperature in ${city} is ${weather.main.temp} F`;
-        console.log(msg);
-    }
-});
 
 app.get('/',(req,res) => {
-    res.render('index');
+    console.log()
+    res.render('index',{weather:null,error:null});
+})
+
+app.post('/',(req,res) => {
+    let city = req.body.city;
+    let url =`http://api.openweathermap.org/data/2.5/weather?q=${city}&units=imperial&appid=${apiKey}` 
+
+    request(url, (err,respone,body) => {
+        if(err){
+            res.render('index',{weather:null,error:'Try Again'});
+        } else {
+            let weather = JSON.parse(body);
+            if(weather==undefined){
+                res.render('index',{weather:null,error:'Try Again'});
+            } else {
+                let weath = `The weather of ${city} is ${weather.main.temp} F`;
+                res.render('index', {weather:weath, error:null});
+            }
+        }
+    })
 })
 
 app.listen(3000, () => {
